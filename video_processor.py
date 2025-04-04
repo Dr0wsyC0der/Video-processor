@@ -22,9 +22,17 @@ class VideoProcessor:
         self.old = 0
         self.new = 0
         self.plot = plot
+        self.brightness = 0
+        self.contrast = 0
+        self.sharpness = 0
+        self.noises = 0
 
-    def load_video(self, file_path):
+    def load_video(self, file_path, brt = 0, cntr = 1, shr = 0, ns = 1):
         self.cap = cv2.VideoCapture(file_path)
+        self.brightness = brt
+        self.contrast = cntr
+        self.sharpness = shr
+        self.noises = ns
 
     def check_black_corners(self, frame):
         height, width, _ = frame.shape
@@ -65,6 +73,16 @@ class VideoProcessor:
             return None
 
         ret, frame = self.cap.read()
+        frame = cv2.medianBlur(frame, self.noises)
+        frame = cv2.convertScaleAbs(frame, alpha=self.contrast, beta=self.brightness)
+        # sharpness = 0
+        # base_kernel = np.array([[0, -1, 0],
+        #                         [-1, 5, -1],
+        #                         [0, -1, 0]])
+        # if sharpness > 0:
+        #     kernel = base_kernel * sharpness
+        #     kernel[1, 1] = 5 * sharpness + 1  # усиление центра
+        #     frame = cv2.filter2D(frame, -1, kernel)
         frame_cords = []
         if not ret:
             self.running = False
