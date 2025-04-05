@@ -112,7 +112,7 @@ class VideoProcessor:
                 upper_blue = np.array([140, 255, 255])
                 mask = cv2.inRange(hsv, lower_blue, upper_blue)
             _, mask = cv2.threshold(mask, 120, 255, cv2.THRESH_BINARY)
-            cv2.imshow("mask", mask)
+            # cv2.imshow("mask", mask)
             if self.flag<=12:
                 tracked_centers = []
                 blurred = cv2.GaussianBlur(mask, (5, 5), 0)
@@ -170,4 +170,4 @@ class VideoProcessor:
                 self.old, self.new = sorter.process()
                 self.plot.update_data(self.old, self.new)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        return frame
+        return frame, mask
