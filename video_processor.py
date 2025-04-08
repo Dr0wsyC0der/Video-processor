@@ -73,6 +73,7 @@ class VideoProcessor:
             return None
 
         ret, frame = self.cap.read()
+        mask = None
         frame = cv2.medianBlur(frame, self.noises)
         frame = cv2.convertScaleAbs(frame, alpha=self.contrast, beta=self.brightness)
         # sharpness = 0
