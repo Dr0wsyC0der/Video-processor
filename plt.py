@@ -11,6 +11,7 @@ class Live3DPlot:
 
         # Создаём сцену
         self.canvas = scene.SceneCanvas(keys='interactive', size=(800, 600), show=True)
+        self.canvas.native.move(900, 100)
         self.view = self.canvas.central_widget.add_view()
         self.view.camera = 'turntable'
 
