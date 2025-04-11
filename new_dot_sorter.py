@@ -41,8 +41,8 @@ class MegaSorter:
                     found = True
                     break
             if not found:
-                new_x = randint(point[0], point[0] + 5)
-                new_y = randint(point[1], point[1] + 5)
+                new_x = randint(point[0], point[0] + 3)
+                new_y = randint(point[1], point[1] + 3)
                 new_positions.append((new_x, new_y))
 
         paired = list(zip(self.old_x_y, new_positions))
