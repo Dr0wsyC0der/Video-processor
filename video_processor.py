@@ -314,6 +314,8 @@ class VideoProcessor:
                     #     cv2.circle(frame, (cx, cy), 3, (0, 255, 255), -1)
 
                     sorter = MegaSorter(self.home_pos, frame_cords)
+                    if not ret:
+                        sorter.reset_all_data()
                     self.old, self.new = sorter.process()
                     self.plot.update_data(self.old, self.new)
 

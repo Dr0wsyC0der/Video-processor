@@ -14,6 +14,7 @@ class Ui_Video_Processor:
         self.brightness_value = 0
         self.noise_value = 0
         self.video_path = None
+        self.is_paused = False
 
     def setupUi(self, Video_Processor):
         Video_Processor.setObjectName("Video_Processor")
@@ -21,7 +22,7 @@ class Ui_Video_Processor:
         Video_Processor.move(100, 100)
         Video_Processor.setStyleSheet("background-color: rgb(216, 250, 255); color: black;")
 
-        button_style_red = """
+        self.button_style_red = """
         QPushButton {
             background-color: rgb(255, 0, 0);
             color: white;
@@ -66,6 +67,8 @@ class Ui_Video_Processor:
         self.frame.setObjectName("frame")
         self.frame.setStyleSheet("background-color: white")
         self.frame.setScaledContents(True)
+        pixmap = QPixmap('vid_pic.png')
+        self.frame.setPixmap(pixmap)
 
         self.mask = QtWidgets.QLabel(parent=self.centralwidget)
         self.mask.setGeometry(QtCore.QRect(10, 310, 521, 250))
@@ -91,7 +94,7 @@ class Ui_Video_Processor:
 
         self.start = QtWidgets.QPushButton(parent=self.centralwidget)
         self.start.setGeometry(QtCore.QRect(550, 350, 221, 41))
-        self.start.setStyleSheet(button_style_red)
+        self.start.setStyleSheet(self.button_style_red)
         self.start.setObjectName("start")
         self.start.clicked.connect(self.start_processing)
 
@@ -139,11 +142,22 @@ class Ui_Video_Processor:
         self.set_default_slider_values()
         self.default_btn.clicked.connect(self.set_default_slider_values)
 
+        self.pause = QtWidgets.QPushButton(parent=self.centralwidget)
+        self.pause.setGeometry(QtCore.QRect(550, 600, 221, 41))
+        self.pause.setStyleSheet(self.button_style_red)
+        self.pause.setObjectName("pause")
+        # self.pause.clicked.connect()
+
         self.file = QtWidgets.QPushButton(parent=self.centralwidget)
         self.file.setGeometry(QtCore.QRect(550, 310, 221, 25))
-        self.file.setStyleSheet(button_style_red)
+        self.file.setStyleSheet(self.button_style_red)
         self.file.setObjectName("file")
         self.file.clicked.connect(self.openFileDialog)
+
+        self.source_selector = QtWidgets.QComboBox(parent=self.centralwidget)
+        self.source_selector.setGeometry(QtCore.QRect(550, 400, 221, 25))
+        self.source_selector.addItems(["Файл", "Камера"])
+        self.source_selector.setObjectName("source_selector")
 
         self.label_4 = QtWidgets.QLabel(parent=self.centralwidget)
         self.label_4.setGeometry(QtCore.QRect(550, 10, 221, 31))
@@ -161,6 +175,7 @@ class Ui_Video_Processor:
         self.cntr_slide.valueChanged.connect(self.update_contrast)
         self.shrrp_slide.valueChanged.connect(self.update_sharpness)
         self.noise_slide.valueChanged.connect(self.update_noise)
+        self.source_selector.currentTextChanged.connect(self.update_select_btn)
 
         self.cntr_slide.setValue(1)
 
@@ -194,33 +209,35 @@ class Ui_Video_Processor:
         self.file.setText(_translate("Video_Processor", "ВЫБРАТЬ ФАЙЛ"))
         self.label_4.setText(_translate("Video_Processor", "                             ФИЛЬТРЫ"))
         self.video_time.setText(_translate("Video_Processor", "00:00 / 00:00"))
+        self.pause.setText(_translate("Video_Processor", 'Пауза'))
 
     def openFileDialog(self):
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(
-            None,
-            "Выберите видеофайл",
-            "",
-            "Видео файлы (*.mp4 *.avi *.mov *.mkv);;Все файлы (*)"
-        )
-        if file_path:
-            valid_extensions = (".mp4", ".avi", ".mov", ".mkv")
-            if not file_path.lower().endswith(valid_extensions):
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Icon.Warning)
-                msg.setWindowTitle("Ошибка")
-                msg.setText("Выбранный файл не является видео.")
-                msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-                msg.exec()
-                return
+        if self.source_selector.currentText()=='Файл':
+            file_dialog = QFileDialog()
+            file_path, _ = file_dialog.getOpenFileName(
+                None,
+                "Выберите видеофайл",
+                "",
+                "Видео файлы (*.mp4 *.avi *.mov *.mkv);;Все файлы (*)"
+            )
+            if file_path:
+                valid_extensions = (".mp4", ".avi", ".mov", ".mkv")
+                if not file_path.lower().endswith(valid_extensions):
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Icon.Warning)
+                    msg.setWindowTitle("Ошибка")
+                    msg.setText("Выбранный файл не является видео.")
+                    msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+                    msg.exec()
+                    return
 
-            self.cap = cv2.VideoCapture(file_path)
-            self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            self.current_frame_index = 0
-            self.show_frame(self.current_frame_index)
-            self.file.setText("Файл выбран")
-            self.file.setStyleSheet(self.button_style_green)
-            self.video_path = file_path
+                self.cap = cv2.VideoCapture(file_path)
+                self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                self.current_frame_index = 0
+                self.show_frame(self.current_frame_index)
+                self.file.setText("Файл выбран")
+                self.file.setStyleSheet(self.button_style_green)
+                self.video_path = file_path
 
     def show_frame(self, index):
         if self.cap and self.cap.isOpened():
@@ -339,6 +356,16 @@ class Ui_Video_Processor:
         self.noise.setText(str(value))
         self.noise_value = value
         self.update_frame()
+    def update_select_btn(self, text=None):
+        if text is None:
+            text = self.source_selector.currentText()
+        if text == 'Камера':
+            self.file.setText("Файл выбран")
+            self.file.setStyleSheet(self.button_style_green)
+        elif text=='Файл':
+            self.file.setText('ВЫБРАТЬ ФАЙЛ')
+            self.file.setStyleSheet(self.button_style_red)
+
 
     def set_default_slider_values(self):
         self.brt_slide.setValue(0)
@@ -350,23 +377,6 @@ class Ui_Video_Processor:
         self.contrast.setText("1")
         self.sharpness.setText("0")
         self.noise.setText("0")
-
-    # def update_processed_frame(self):
-    #     frame, mask = self.processor.process_frame()
-    #     if frame is not None:
-    #         # frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    #         h, w, ch = frame.shape
-    #         bytes_per_line = ch * w
-    #         qt_img = QImage(frame.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
-    #         pixmap = QPixmap.fromImage(qt_img)
-    #         self.frame.setPixmap(pixmap)
-    #     if mask is not None:
-    #         qimg = QImage(mask.data, mask.shape[1], mask.shape[0], mask.shape[1], QImage.Format.Format_Grayscale8)
-    #         pixmap = QPixmap.fromImage(qimg)
-    #         self.mask.setPixmap(pixmap)
-    #
-    #     else:
-    #         self.timer.stop()
 
     def update_processed_frame(self):
         if self.current_frame_index >= self.total_frames:
@@ -392,6 +402,10 @@ class Ui_Video_Processor:
         except Exception as e:
             print(f"Ошибка при обработке кадра: {e}")
             self.timer.stop()
+            self.video_path = None
+            self.update_select_btn('Файл')
+            pixmap = QPixmap('vid_pic.png')
+            self.frame.setPixmap(pixmap)
 
     def reset_video_state(self):
         self.current_frame_index = 0
@@ -399,6 +413,8 @@ class Ui_Video_Processor:
         self.file.setText("Выбрать файл")
         self.file.setStyleSheet(self.button_style_white)
         self.set_default_slider_values()  # Восстановление значений слайдеров
-        self.processor.running = False  # Остановить обработку
+        self.processor.running = False
+
+
 
 

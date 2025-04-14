@@ -52,6 +52,14 @@ class MegaSorter:
         scaled_points = [(x, y) for x, y in list(nl2)]
         return list(nl1), scaled_points
 
+    def reset_all_data(self):
+        self.new_l_x = []
+        self.new_l_y = []
+        self.old_x_y = []
+        self.new_x_y = []
+        self.frame_dots = []
+        self.home_dots = []
+
     def process(self):
         self.group_first_list()
         self.extract_old_x_y()
