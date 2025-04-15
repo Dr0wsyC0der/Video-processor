@@ -4,6 +4,7 @@ import numpy as np
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtWidgets import QFileDialog, QMessageBox
 from PyQt6.QtGui import QImage, QPixmap
+from camera import CameraSelectionDialog
 
 
 class Ui_Video_Processor:
@@ -15,6 +16,7 @@ class Ui_Video_Processor:
         self.noise_value = 0
         self.video_path = None
         self.is_paused = False
+        self.cam_cap = None
 
     def setupUi(self, Video_Processor):
         Video_Processor.setObjectName("Video_Processor")
@@ -362,6 +364,12 @@ class Ui_Video_Processor:
         if text == 'Камера':
             self.file.setText("Файл выбран")
             self.file.setStyleSheet(self.button_style_green)
+            dialog = CameraSelectionDialog()
+            selected_index = dialog.get_selected_camera_index()
+            self.cam_cap = cv2.VideoCapture(selected_index)
+            self.timer.timeout.connect(self.update_frame_cam)
+            self.timer.start(30)
+
         elif text=='Файл':
             self.file.setText('ВЫБРАТЬ ФАЙЛ')
             self.file.setStyleSheet(self.button_style_red)
@@ -415,6 +423,19 @@ class Ui_Video_Processor:
         self.set_default_slider_values()  # Восстановление значений слайдеров
         self.processor.running = False
 
+
+    def update_frame_cam(self):
+        ret, frame = self.cam_cap.read()
+        if ret:
+            try:
+                frame_2 = self.processor.pre_process_frame(frame)  # Обработка кадра
+                if frame_2 is not None:
+                    frame_2 = cv2.cvtColor(frame_2, cv2.COLOR_BGR2RGB)
+                    h, w, ch = frame_2.shape
+                    image = QImage(frame_2.data, w, h, ch * w, QImage.Format.Format_RGB888)
+                    self.frame.setPixmap(QPixmap.fromImage(image))
+            except Exception as e:
+                print(f"Ошибка при обработке кадра: {e}")
 
 
 
