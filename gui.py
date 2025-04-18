@@ -438,12 +438,20 @@ class Ui_Video_Processor:
                 if not flag:
                     frame_2 = self.processor.pre_process_frame(frame)  # Обработка кадра
                 elif flag:
-                    frame_2 = self.processor.process_frame(frame)
+                    frame_2, mask = self.processor.process_frame2(frame, ret)
+
                 if frame_2 is not None:
                     frame_2 = cv2.cvtColor(frame_2, cv2.COLOR_BGR2RGB)
                     h, w, ch = frame_2.shape
                     image = QImage(frame_2.data, w, h, ch * w, QImage.Format.Format_RGB888)
                     self.frame.setPixmap(QPixmap.fromImage(image))
+
+                if mask is not None:
+                    qimg = QImage(mask.data, mask.shape[1], mask.shape[0], mask.shape[1],
+                                  QImage.Format.Format_Grayscale8)
+                    pixmap = QPixmap.fromImage(qimg)
+                    self.mask.setPixmap(pixmap)
+
             except Exception as e:
                 print(f"Ошибка при обработке кадра: {e}")
 
