@@ -17,6 +17,7 @@ class Ui_Video_Processor:
         self.video_path = None
         self.is_paused = False
         self.cam_cap = None
+        self.selected_index = None
 
     def setupUi(self, Video_Processor):
         Video_Processor.setObjectName("Video_Processor")
@@ -274,25 +275,31 @@ class Ui_Video_Processor:
             self.timer.stop()
 
     def start_processing(self):
-        if not self.cap or not hasattr(self.processor, 'load_video') or not hasattr(self.processor, 'process_frame'):
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Icon.Warning)
-            msg.setWindowTitle("Ошибка")
-            msg.setText("Не выбрано видео или отсутствует обработчик!")
-            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
-            msg.exec()
-            return
+        if self.source_selector.currentText() == 'Камера':
+            self.cam_cap = cv2.VideoCapture(self.selected_index)
+            self.timer.timeout.connect(lambda: self.update_frame_cam(True))
+            self.timer.start(30)
+            self.processor.running = True
+        elif self.source_selector.currentText() == 'Файл':
+            if not self.cap or not hasattr(self.processor, 'load_video') or not hasattr(self.processor, 'process_frame'):
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Icon.Warning)
+                msg.setWindowTitle("Ошибка")
+                msg.setText("Не выбрано видео или отсутствует обработчик!")
+                msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+                msg.exec()
+                return
 
-        self.processor.load_video(self.video_path, self.brightness_value, self.contrast_value, self.sharpness_value, self.noise_value)
-        self.processor.running = True  # если у тебя такой флаг используется
+            self.processor.load_video(self.video_path, self.brightness_value, self.contrast_value, self.sharpness_value, self.noise_value)
+            self.processor.running = True  # если у тебя такой флаг используется
 
-        try:
-            self.timer.timeout.disconnect(self.play_video_frame)
-        except TypeError:
-            pass
+            try:
+                self.timer.timeout.disconnect(self.play_video_frame)
+            except TypeError:
+                pass
 
-        self.timer.timeout.connect(self.update_processed_frame)
-        self.timer.start(33)  # ≈30 FPS
+            self.timer.timeout.connect(self.update_processed_frame)
+            self.timer.start(33)  # ≈30 FPS
 
     def update_frame(self):
         if not self.cap or self.current_frame_index >= self.total_frames:
@@ -365,8 +372,8 @@ class Ui_Video_Processor:
             self.file.setText("Файл выбран")
             self.file.setStyleSheet(self.button_style_green)
             dialog = CameraSelectionDialog()
-            selected_index = dialog.get_selected_camera_index()
-            self.cam_cap = cv2.VideoCapture(selected_index)
+            self.selected_index = dialog.get_selected_camera_index()
+            self.cam_cap = cv2.VideoCapture(self.selected_index)
             self.timer.timeout.connect(self.update_frame_cam)
             self.timer.start(30)
 
@@ -424,11 +431,14 @@ class Ui_Video_Processor:
         self.processor.running = False
 
 
-    def update_frame_cam(self):
+    def update_frame_cam(self, flag = False):
         ret, frame = self.cam_cap.read()
         if ret:
             try:
-                frame_2 = self.processor.pre_process_frame(frame)  # Обработка кадра
+                if not flag:
+                    frame_2 = self.processor.pre_process_frame(frame)  # Обработка кадра
+                elif flag:
+                    frame_2 = self.processor.process_frame(frame)
                 if frame_2 is not None:
                     frame_2 = cv2.cvtColor(frame_2, cv2.COLOR_BGR2RGB)
                     h, w, ch = frame_2.shape

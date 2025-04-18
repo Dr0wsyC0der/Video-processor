@@ -75,19 +75,22 @@ class VideoProcessor:
         return color_name
 
 
-    def process_frame(self):
-        if self.cap is None or not self.cap.isOpened():
-            return None
-        # width = int(int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))//2)
-        # height = int(int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))//2)
-        ret, frame = self.cap.read()
-        # frame = cv2.resize(frame, (width, height))
-        mask = None
-        frame_cords = []
+    def process_frame(self, frame = None):
+        if frame is None:
+            if self.cap is None or not self.cap.isOpened():
+                return None
+            # width = int(int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))//2)
+            # height = int(int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))//2)
+            ret, frame = self.cap.read()
+            # frame = cv2.resize(frame, (width, height))
+            mask = None
+            frame_cords = []
 
-        if not ret:
-            self.running = False
-            return None
+            if not ret:
+                self.running = False
+                return None
+
+
 
         # ================= ФИЛЬТРЫ =================
         # Медианный фильтр шума
