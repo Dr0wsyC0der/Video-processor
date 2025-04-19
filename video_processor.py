@@ -8,7 +8,6 @@ class VideoProcessor:
     def __init__(self, plot):
         self.cap = None
         self.object_det = cv2.createBackgroundSubtractorMOG2(history=100, varThreshold=40)
-        self.dominant_color = ""
         self.counter = 0
         self.cords = []
         self.flag = 0
@@ -54,26 +53,7 @@ class VideoProcessor:
         return True
 
 
-    def dm_color(self, frame):
-        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pixels = image.reshape(-1, 3)
-        pixels = np.float32(pixels)
-        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.2)
-        k = 3
-        _, labels, centers = cv2.kmeans(pixels, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-        centers = np.uint8(centers)
-        second_dominant_color = centers[1]
-        def get_color_name(rgb_color):
-            r, g, b = rgb_color
-            if r > g and r > b:
-                return "1"
-            elif g > r and g > b:
-                return "2"
-            elif b > r and b > g:
-                return "3"
 
-        color_name = get_color_name(second_dominant_color)
-        return color_name
 
 
     def process_frame(self):
@@ -360,3 +340,25 @@ class VideoProcessor:
 
         # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         return frame, mask
+
+    def return_default_params(self):
+        self.cap = None
+        self.object_det = cv2.createBackgroundSubtractorMOG2(history=100, varThreshold=40)
+        self.counter = 0
+        self.cords = []
+        self.flag = 0
+        self.x1 = 0
+        self.y1 = 0
+        self.x2 = 0
+        self.y2 = 0
+        self.cords2 = []
+        self.home_pos = []
+        self.black_c = False
+        self.old = 0
+        self.new = 0
+        self.brightness = 0
+        self.contrast = 0
+        self.sharpness = 0
+        self.noises = 0
+        self.frame = None
+        self.mask = None

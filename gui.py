@@ -289,7 +289,7 @@ class Ui_Video_Processor:
                 msg.setStandardButtons(QMessageBox.StandardButton.Ok)
                 msg.exec()
                 return
-
+            self.processor.return_default_params()
             self.processor.load_video(self.video_path)
             self.processor.get_params(self.brightness_value, self.contrast_value, self.sharpness_value, self.noise_value)
             try:
@@ -302,16 +302,14 @@ class Ui_Video_Processor:
 
     def update_frame(self):
         if not self.cap or self.current_frame_index >= self.total_frames:
-            return  # если нет видео или достигнут конец
+            return
 
-        # Читаем кадр
         self.cap.set(cv2.CAP_PROP_POS_FRAMES, self.current_frame_index)
         ret, frame = self.cap.read()
 
         if not ret:
-            return  # если кадр не был считан
+            return
 
-        # Применяем фильтры (яркость, контраст, резкость, шум) на лету
         frame = self.apply_filters(frame)
 
         if frame is not None:
@@ -327,7 +325,6 @@ class Ui_Video_Processor:
     def apply_filters(self, frame):
         frame = cv2.convertScaleAbs(frame, alpha=self.contrast_value, beta=self.brightness_value)
 
-        # Применяем резкость (если значение больше 0)
         shr = self.sharpness_value
         if shr > 0:
             base_kernel = np.array([[0, -1, 0],
@@ -335,7 +332,6 @@ class Ui_Video_Processor:
                                     [0, -1, 0]])
             frame = cv2.filter2D(frame, -1, base_kernel)
 
-        # Применяем шум (если установлен флаг)
         ns = self.noise_value
         if ns > 0:
             kernel_size = int(ns)
@@ -396,7 +392,8 @@ class Ui_Video_Processor:
         if self.current_frame_index >= self.total_frames:
             # Если видео закончилось, остановим таймер
             self.timer.stop()
-            self.reset_video_state()  # Восстановить состояние после окончания видео
+            self.reset_video_state()
+            self.return_defaut_params()# Восстановить состояние после окончания видео
             return
 
         try:
@@ -426,12 +423,15 @@ class Ui_Video_Processor:
         self.video_time.setText("00:00 / 00:00")
         self.file.setText("Выбрать файл")
         self.file.setStyleSheet(self.button_style_white)
-        self.set_default_slider_values()  # Восстановление значений слайдеров
+        self.set_default_slider_values()
         self.processor.running = False
 
 
     def update_frame_cam(self, flag = False):
         ret, frame = self.cam_cap.read()
+        mask = None
+        frame_2 = None
+
         if ret:
             try:
                 if not flag:
@@ -448,6 +448,8 @@ class Ui_Video_Processor:
                     h, w, ch = frame_2.shape
                     image = QImage(frame_2.data, w, h, ch * w, QImage.Format.Format_RGB888)
                     self.frame.setPixmap(QPixmap.fromImage(image))
+                else:
+                    self.return_defaut_params()
 
                 if mask is not None:
                     qimg = QImage(mask.data, mask.shape[1], mask.shape[0], mask.shape[1],
@@ -458,5 +460,11 @@ class Ui_Video_Processor:
             except Exception as e:
                 print(f"Ошибка при обработке кадра: {e}")
 
-
+    def return_default_params(self):
+        self.video_path = None
+        self.is_paused = False
+        self.cam_cap = None
+        self.selected_index = None
+        pixmap = QPixmap('vid_pic.png')
+        self.frame.setPixmap(pixmap)
 
