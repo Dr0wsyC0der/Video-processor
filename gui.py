@@ -290,9 +290,8 @@ class Ui_Video_Processor:
                 msg.exec()
                 return
 
-            self.processor.load_video(self.video_path, self.brightness_value, self.contrast_value, self.sharpness_value, self.noise_value)
-            self.processor.running = True  # если у тебя такой флаг используется
-
+            self.processor.load_video(self.video_path)
+            self.processor.get_params(self.brightness_value, self.contrast_value, self.sharpness_value, self.noise_value)
             try:
                 self.timer.timeout.disconnect(self.play_video_frame)
             except TypeError:
@@ -436,9 +435,13 @@ class Ui_Video_Processor:
         if ret:
             try:
                 if not flag:
-                    frame_2 = self.processor.pre_process_frame(frame)  # Обработка кадра
+                    frame_2 = self.processor.pre_process_frame(frame)
+                    self.processor.get_params(self.brightness_value, self.contrast_value, self.sharpness_value,
+                                              self.noise_value)
                 elif flag:
                     frame_2, mask = self.processor.process_frame2(frame, ret)
+                    self.processor.get_params(self.brightness_value, self.contrast_value, self.sharpness_value,
+                                              self.noise_value)
 
                 if frame_2 is not None:
                     frame_2 = cv2.cvtColor(frame_2, cv2.COLOR_BGR2RGB)

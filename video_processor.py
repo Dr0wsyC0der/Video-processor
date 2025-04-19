@@ -7,7 +7,6 @@ cv2.ocl.setUseOpenCL(True)
 class VideoProcessor:
     def __init__(self, plot):
         self.cap = None
-        self.running = False
         self.object_det = cv2.createBackgroundSubtractorMOG2(history=100, varThreshold=40)
         self.dominant_color = ""
         self.counter = 0
@@ -30,13 +29,15 @@ class VideoProcessor:
         self.frame = None
         self.mask = None
 
-    def load_video(self, file_path, brt, cntr, shr, ns):
+    def load_video(self, file_path):
         self.cap = cv2.VideoCapture(file_path)
+
+
+    def get_params(self, brt, cntr, shr, ns):
         self.brightness = brt
         self.contrast = cntr
         self.sharpness = shr
         self.noises = ns
-
 
     def check_black_corners(self, frame):
         height, width, _ = frame.shape
