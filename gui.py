@@ -289,7 +289,6 @@ class Ui_Video_Processor:
                 msg.setStandardButtons(QMessageBox.StandardButton.Ok)
                 msg.exec()
                 return
-            self.processor.return_default_params()
             self.processor.load_video(self.video_path)
             self.processor.get_params(self.brightness_value, self.contrast_value, self.sharpness_value, self.noise_value)
             try:
@@ -417,6 +416,7 @@ class Ui_Video_Processor:
             self.update_select_btn('Файл')
             pixmap = QPixmap('vid_pic.png')
             self.frame.setPixmap(pixmap)
+            self.processor.return_default_params()
 
     def reset_video_state(self):
         self.current_frame_index = 0

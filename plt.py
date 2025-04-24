@@ -28,7 +28,10 @@ class Live3DPlot:
         self.update_surface()
         self.update_camera()  # Автоматическое центрирование камеры
 
-    def update_surface(self):
+    def update_surface(self, param = 0):
+        if param==1:
+            self.old_points = np.array([])
+            self.new_points = np.array([])
         if self.old_points.size == 0 or self.new_points.size == 0:
             return
 
@@ -69,3 +72,12 @@ class Live3DPlot:
 
     def run(self):
         app.run()
+
+    def default(self):
+        self.old_points = np.array([])
+        self.new_points = np.array([])
+        self.mesh.parent = None  # Удаляем визуализацию с ViewBox
+
+        # Пересоздаём пустую mesh
+        self.mesh = scene.visuals.Mesh()
+        self.view.add(self.mesh)

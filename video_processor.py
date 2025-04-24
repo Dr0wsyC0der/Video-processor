@@ -362,3 +362,4 @@ class VideoProcessor:
         self.noises = 0
         self.frame = None
         self.mask = None
+        self.plot.default()
