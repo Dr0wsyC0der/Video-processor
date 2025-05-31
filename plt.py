@@ -74,10 +74,5 @@ class Live3DPlot:
         app.run()
 
     def default(self):
-        self.old_points = np.array([])
-        self.new_points = np.array([])
-        self.mesh.parent = None  # Удаляем визуализацию с ViewBox
-
-        # Пересоздаём пустую mesh
-        self.mesh = scene.visuals.Mesh()
-        self.view.add(self.mesh)
+        self.view.scene.clear()
+        self.__init__()

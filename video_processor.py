@@ -17,7 +17,7 @@ class VideoProcessor:
         self.y2 = 0
         self.cords2 = []
         self.home_pos = []
-        self.black_c = False
+        self.black_c = True
         self.old = 0
         self.new = 0
         self.plot = plot
@@ -38,19 +38,20 @@ class VideoProcessor:
         self.sharpness = shr
         self.noises = ns
 
-    def check_black_corners(self, frame):
-        height, width, _ = frame.shape
-        corners = [
-            frame[0, 0],
-            frame[0, width - 1],
-            frame[height - 1, 0],
-            frame[height - 1, width - 1]
-        ]
-        for corner in corners:
-            r, g, b = corner
-            if r > 10 or g > 10 or b > 10:
-                return False
-        return True
+    # def check_black_corners(self, frame):
+    #     height, width, _ = frame.shape
+    #     print(height, width)
+    #     corners = [
+    #         frame[0, 0],
+    #         frame[0, width - 1],
+    #         frame[height - 1, 0],
+    #         frame[height - 1, width - 1]
+    #     ]
+    #     for corner in corners:
+    #         r, g, b = corner
+    #         if r > 10 or g > 10 or b > 10:
+    #             return False
+    #     return True
 
 
 
@@ -61,6 +62,7 @@ class VideoProcessor:
             return None
         # width = int(int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))//2)
         # height = int(int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))//2)
+
         ret, frame = self.cap.read()
         # frame = cv2.resize(frame, (width, height))
         mask = None
@@ -88,32 +90,10 @@ class VideoProcessor:
                                     [0, -1, 0]])
             frame = cv2.filter2D(frame, -1, base_kernel)
         # ===========================================
-        if not self.black_c:
-            self.black_c = self.check_black_corners(frame)
-
+        # if not self.black_c:
+        #     self.black_c = self.check_black_corners(frame)
+        #
         if self.black_c:
-
-            # hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            #
-            # if self.dominant_color == "1":
-            #     lower_red1 = np.array([150, 100, 100])
-            #     upper_red1 = np.array([180, 255, 255])
-            #     lower_red2 = np.array([170, 120, 70])
-            #     upper_red2 = np.array([180, 255, 255])
-            #     mask1 = cv2.inRange(hsv, lower_red1, upper_red1)
-            #     mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-            #     mask = mask1 + mask2
-            #
-            # elif self.dominant_color == "2":
-            #     lower_green = np.array([40, 50, 50])
-            #     upper_green = np.array([100, 255, 255])
-            #     mask = cv2.inRange(hsv, lower_green, upper_green)
-            #
-            # elif self.dominant_color == "3":
-            #     lower_blue = np.array([100, 100, 50])
-            #     upper_blue = np.array([140, 255, 255])
-            #     mask = cv2.inRange(hsv, lower_blue, upper_blue)
-
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 
@@ -121,7 +101,9 @@ class VideoProcessor:
             #     _, mask = cv2.threshold(mask, 120, 255, cv2.THRESH_BINARY)
             if gray is not None and gray.size > 0:
                 #было 120
-                _, mask = cv2.threshold(gray, 27, 255, cv2.THRESH_BINARY)
+                _, mask = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+                # kernel = np.ones((3, 3), np.uint8)
+                # mask = cv2.dilate(mask, kernel, iterations=1)
 
                 if self.flag <= 12:
                     min_area = 30
@@ -234,7 +216,7 @@ class VideoProcessor:
                 if area > 8:
                     x, y, w, h = cv2.boundingRect(cnt)
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 3)
-        return frame
+            return frame, mask
 
 
     def process_frame2(self, frame, ret):
