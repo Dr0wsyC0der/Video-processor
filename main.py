@@ -24,7 +24,7 @@
 from video_processor import VideoProcessor
 import threading
 from plt import Live3DPlot
-from gui2 import VideoProcessorWindow
+from gui import VideoProcessorWindow
 import sys
 import cv2
 from PyQt6 import QtCore, QtGui, QtWidgets
