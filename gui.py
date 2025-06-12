@@ -514,7 +514,7 @@ class VideoProcessorWindow(QMainWindow):
         self.selected_index = None
         self.sharpness_value = 0
         self.contrast_value = 1
-        self.brightness_value = 0
+        self.brightness_value = 1
         self.noise_value = 0
         #Стили кнопок
         self.button_style_red = """
@@ -847,7 +847,7 @@ class VideoProcessorWindow(QMainWindow):
                     self.processor.get_params(self.brightness_value, self.contrast_value, self.sharpness_value,
                                               self.noise_value)
                 elif flag:
-                    frame_2, mask = self.processor.process_frame2(frame, ret)
+                    frame_2, mask = self.processor.process_frame(frame, ret)
                     self.processor.get_params(self.brightness_value, self.contrast_value, self.sharpness_value,
                                               self.noise_value)
 
