@@ -358,6 +358,7 @@
 
 
 from multiprocessing.spawn import old_main_modules
+
 import cv2
 import numpy as np
 from new_dot_sorter import MegaSorter
@@ -372,11 +373,11 @@ class VideoProcessor:
         self.y2 = 0
         self.cords2 = []
         self.home_pos = []
-        self.black_c = True
+        self.crop_coords = None
         self.old = 0
         self.new = 0
         self.plot = plot
-        self.brightness = 1
+        self.brightness = 0
         self.contrast = 1
         self.sharpness = 0
         self.noises = 0
@@ -386,9 +387,12 @@ class VideoProcessor:
 
     def get_params(self, brt, cntr, shr, ns):
         self.brightness = brt
-        self.contrast = cntr
+        self.contrast = int(cntr)
         self.sharpness = shr
         self.noises = ns
+
+    def get_crop_coords(self, crop_coords):
+        self.crop_coords = crop_coords
 
     def apply_filters(self, frame):
         if self.noises > 0:
@@ -408,23 +412,31 @@ class VideoProcessor:
         if frame is None and ret is None:
             if self.cap is None or not self.cap.isOpened():
                 return None
-            width = int(int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))//2)
-            height = int(int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))//2)
             ret, frame = self.cap.read()
             if not ret or frame is None:
                 return
-            frame = cv2.resize(frame, (width, height))
+            if self.crop_coords is not None:
+                y1, y2, x1, x2 = self.crop_coords
+                frame = frame[y1:y2, x1:x2]
+            frame = cv2.resize(frame, (960, 960), interpolation=cv2.INTER_LINEAR)
+            print(frame.shape[:2])
         frame_cords = []
         frame = self.apply_filters(frame)
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        _, mask = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+        _, mask = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
+        # mask = cv2.adaptiveThreshold(gray, 255,
+        #                              cv2.ADAPTIVE_THRESH_MEAN_C,
+        #                              cv2.THRESH_BINARY_INV, 11, 2)
+        kernel = np.ones((3, 3), np.uint8)
+        mask = cv2.dilate(mask, kernel, iterations=1)
+
         if self.flag <= 12:
             tracked_centers = []
-            gray = cv2.GaussianBlur(mask, (9, 9), 0)
-            edges = cv2.Canny(gray, threshold1=100, threshold2=200)
-            cv2.imshow('Canny Edges', edges)
-            circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1, minDist=100,
-                                       param1=100, param2=40, minRadius=50, maxRadius=400)
+            # gray = cv2.GaussianBlur(mask, (9, 9), 0)
+            # edges = cv2.Canny(gray, threshold1=100, threshold2=200)
+            # cv2.imshow('Canny Edges', edges)
+            circles = cv2.HoughCircles(mask, cv2.HOUGH_GRADIENT, dp=1, minDist=100,
+                                       param1=100, param2=40, minRadius=150, maxRadius=400)
             if circles is not None:
                 circles = np.uint16(np.around(circles))
                 x, y, r = circles[0][0]
@@ -432,7 +444,8 @@ class VideoProcessor:
                 x1, y1 = x - square_side, y - square_side
                 x2, y2 = x + square_side, y + square_side
 
-                contours, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+                contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 for cnt in contours:
                     M = cv2.moments(cnt)
                     if M["m00"] != 0:
@@ -448,7 +461,7 @@ class VideoProcessor:
 
                 self.cords2.append([len(tracked_centers), x1, y1, x2, y2])
                 self.home_pos.append([len(tracked_centers), tracked_centers])
-                # self.flag += 1
+                self.flag += 1
 
         if self.flag == 13:
             self.cords2.sort(key=lambda x: x[0], reverse=True)
@@ -491,6 +504,22 @@ class VideoProcessor:
                     cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 3)
             return frame, mask
 
-    def return_default_params(self):
-        self.__init__(plot)
+    def return_default_params(self, full_reset = True):
+        self.cap = None
+        self.flag = 0
+        self.x1 = 0
+        self.y1 = 0
+        self.x2 = 0
+        self.y2 = 0
+        self.cords2 = []
+        self.home_pos = []
+        self.old = 0
+        self.new = 0
+        if full_reset:
+            self.brightness = 0
+            self.contrast = 1
+            self.sharpness = 0
+            self.noises = 0
+
+
 
