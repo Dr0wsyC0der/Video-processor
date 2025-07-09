@@ -42,7 +42,9 @@ class Live3DPlot:
 
         vertices = np.c_[x_old, y_old, self.Z]
         faces = tri.simplices
-        cmap = cm.get_cmap("plasma")
+        # cmap = cm.get_cmap("plasma")
+        cmap = cm.get_cmap("viridis")
+        # cmap = cm.get_cmap("twilight")
 
         # Исправление количества цветов
         face_colors = cmap(self.Z[faces].mean(axis=1) / self.Z.max())
@@ -76,3 +78,4 @@ class Live3DPlot:
     def default(self):
         self.view.scene.clear()
         self.__init__()
+
