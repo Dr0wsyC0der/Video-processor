@@ -35,11 +35,11 @@ if __name__ == "__main__":
     def start_vispy():
         plot.run()
     plot = Live3DPlot()
-    vispy_thread = threading.Thread(target=start_vispy, daemon=True)
+    vispy_thread = threading.Thread(target=start_vispy, name="VispyThread",  daemon=True)
     vispy_thread.start()
     processor = VideoProcessor(plot)
     app = QtWidgets.QApplication(sys.argv)
     Video_Processor = QtWidgets.QMainWindow()
-    ui = VideoProcessorWindow(processor)
+    ui = VideoProcessorWindow(processor, vispy_thread)
     ui.show()
     sys.exit(app.exec())
