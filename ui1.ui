@@ -14,7 +14,7 @@
    <string>Video Processor</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(212, 255, 254);</string>
+   <string notr="true">background-color: rgb(170, 170, 255);</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLabel" name="vid_frame">
@@ -462,6 +462,23 @@ QPushButton:hover {
     </property>
     <property name="checkable">
      <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="auto_filter_check">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>30</y>
+      <width>221</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(0, 0, 0);
+</string>
+    </property>
+    <property name="text">
+     <string>Автофильтр</string>
     </property>
    </widget>
   </widget>
