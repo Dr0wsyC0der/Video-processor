@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QFileDialog, QMessageBox, QCheckBox
 from PyQt6.QtGui import QImage, QPixmap, QPainter, QPen
 from PyQt6.QtCore import Qt, QRect
 from camera import CameraSelectionDialog
+from autoParams import AutoParams
 import numpy as np
 
 class VideoProcessorWindow(QMainWindow):
@@ -40,6 +41,7 @@ class VideoProcessorWindow(QMainWindow):
         self.video_path = None
         self.is_paused = False
         self.frame_is_resized = False
+        self.actual_frame = None
         self.update_flag = False
         self.cam_cap = None
         self.new_size = None
@@ -105,6 +107,9 @@ class VideoProcessorWindow(QMainWindow):
         self.start_over.clicked.connect(self.default_start_over)
         self.start_over.setStyleSheet(self.button_style_red)
         self.start_over.hide()
+        self.auto_filter_check.clicked.connect(self.change_slider_state)
+
+
         #Слайдеры
         self.brt_slide.valueChanged.connect(self.update_brightness)
         self.cntr_slide.valueChanged.connect(self.update_contrast)
@@ -121,6 +126,7 @@ class VideoProcessorWindow(QMainWindow):
         #Прочее
         self.set_default_slider_values()
         self.video_time.hide()
+        self.sliders_is_active(False)
 
     def openFileDialog(self):
         if self.source_selector.currentText()=='Файл':
@@ -149,6 +155,7 @@ class VideoProcessorWindow(QMainWindow):
                 self.video_scroll.setMaximum(self.total_seconds)
                 self.show_frame(self.current_frame_index)
                 self.file.setText("Файл выбран")
+                self.sliders_is_active(True)
                 self.set_default_slider_values()
                 self.frame.drawingSwitch(True)
                 self.file.setStyleSheet(self.button_style_green)
@@ -174,6 +181,7 @@ class VideoProcessorWindow(QMainWindow):
             ret, frame = self.cap.read()
             self.frame.actual_frame = frame.copy()
             frame = cv2.resize(frame, (960, 540), interpolation=cv2.INTER_LINEAR)
+            self.actual_frame = frame
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             _, mask = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
             # mask = cv2.adaptiveThreshold(gray, 255,
@@ -251,7 +259,7 @@ class VideoProcessorWindow(QMainWindow):
             self.timer.timeout.connect(self.update_processed_frame)
             self.timer.start(33)
 
-    def display_frame(self, index):
+    def  display_frame(self, index):
         if not self.cap or index >= self.total_frames:
             return
 
@@ -260,18 +268,22 @@ class VideoProcessorWindow(QMainWindow):
         if not ret:
             return
         frame = self.apply_filters(frame)
-        print(type(frame.copy()))
         crop_coords = self.frame.new_size
         if crop_coords is not None:
             y1, y2, x1, x2 = crop_coords
             frame = frame[y1:y2, x1:x2]
             print(y1, y2, x1, x2)
+        if not hasattr(self.__class__.display_frame, "already_run"):
+            self.actual_frame = frame
+            self.__class__.display_frame.already_run = True
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # изменение размера после обрезки
         frame = cv2.resize(frame, (960, 540), interpolation=cv2.INTER_LINEAR)
 
-        _, mask = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
+        # _, mask = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY)
+        _, mask = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         # mask = cv2.adaptiveThreshold(gray, 255,
         #                                  cv2.ADAPTIVE_THRESH_MEAN_C,
         #                                  cv2.THRESH_BINARY_INV, 11, 2)
@@ -322,22 +334,22 @@ class VideoProcessorWindow(QMainWindow):
         return frame
 
     def update_brightness(self, value):
-        self.brt_value.setText(str(value))
+        self.brt_value.setText(str(round(value, 2)))
         self.brightness_value = value
         self.update_frame()
 
     def update_contrast(self, value):
-        self.cntr_value.setText(str(value))
+        self.cntr_value.setText(str(round(value, 2)))
         self.contrast_value = value
         self.update_frame()
 
     def update_sharpness(self, value):
-        self.shrrp_value.setText(str(value))
+        self.shrrp_value.setText(str(round(value, 2)))
         self.sharpness_value = value*0.1
         self.update_frame()
 
     def update_noise(self, value):
-        self.noise_val.setText(str(value))
+        self.noise_val.setText(str(round(value, 2)))
         self.noise_value = value
         self.update_frame()
     def update_select_btn(self, text=None):
@@ -360,16 +372,25 @@ class VideoProcessorWindow(QMainWindow):
             self.file.setStyleSheet(self.button_style_red)
 
 
-    def set_default_slider_values(self):
-        self.brt_slide.setValue(0)
-        self.cntr_slide.setValue(1)
-        self.shrrp_slide.setValue(0)
-        self.noise_slide.setValue(0)
+    def set_default_slider_values(self, brt = 1, cntr = 1, shrrp = 0, noise = 0):
+        self.brt_slide.setValue(int(brt))
+        self.cntr_slide.setValue(int(cntr))
+        self.shrrp_slide.setValue(int(shrrp))
+        self.noise_slide.setValue(int(noise))
 
-        self.brt_value.setText("0")
-        self.cntr_value.setText("1")
-        self.shrrp_value.setText("0")
-        self.noise_val.setText("0")
+        self.brt_value.setText(str(brt))
+        self.cntr_value.setText(str(cntr))
+        self.shrrp_value.setText(str(shrrp))
+        self.noise_val.setText(str(noise))
+
+        self.update_brightness(brt)
+        self.update_contrast(cntr)
+        self.update_sharpness(shrrp)
+        self.update_noise(noise)
+
+
+        print(self.brightness_value, self.contrast_value, self.sharpness_value, self.noise_value)
+        self.update_frame()
 
     def update_processed_frame(self):
         if self.current_frame_index >= self.total_frames:
@@ -410,6 +431,7 @@ class VideoProcessorWindow(QMainWindow):
             self.processor.return_default_params()
 
     def reset_video_state(self):
+        self.sliders_is_active(False)
         self.current_frame_index = 0
         self.video_time.setText("00:00 / 00:00")
         self.file.setText("ВЫБРАТЬ ФАЙЛ")
@@ -510,6 +532,25 @@ class VideoProcessorWindow(QMainWindow):
             current_time = self.video_scroll.value()
             self.current_frame_index = self.fps*current_time
             self.update_frame()
+
+    def sliders_is_active(self, status):
+        self.brt_slide.setEnabled(status)
+        self.cntr_slide.setEnabled(status)
+        self.shrrp_slide.setEnabled(status)
+        self.noise_slide.setEnabled(status)
+
+    def change_slider_state(self):
+        self.set_default_slider_values()
+        status = not self.brt_slide.isEnabled()
+        self.default_btn.setEnabled(status)
+        self.sliders_is_active(status)
+        if self.auto_filter_check.isChecked():
+            if self.actual_frame is not None:
+                auto = AutoParams(self.actual_frame)
+                best = auto.get_params()
+                print(best)
+                self.set_default_slider_values(best["brightness"]*255, best["contrast"], 0, best["noise"])
+
 
     def closeEvent(self, event):
         sys.exit()
