@@ -523,3 +523,60 @@ class VideoProcessor:
 
 
 
+# import cv2
+# import numpy as np
+# import optuna
+#
+# # === 1. Загрузка изображения ===
+# img = cv2.imread("111.png")  # замени на своё изображение
+# if img is None:
+#     raise ValueError("Изображение не загружено! Укажи правильный путь.")
+#
+# # === 2. Оценочная функция ===
+# def evaluate_params(img, brightness, contrast, blur_size):
+#     # Яркость и контраст
+#     proc = cv2.convertScaleAbs(img, alpha=contrast, beta=brightness * 255)
+#
+#     # Гауссово размытие
+#     if blur_size > 0:
+#         k = 2 * blur_size + 1  # 1 → 3x3, 2 → 5x5
+#         proc = cv2.GaussianBlur(proc, (k, k), 0)
+#
+#     # В серый
+#     gray = cv2.cvtColor(proc, cv2.COLOR_BGR2GRAY)
+#
+#     # Порог (Otsu)
+#     _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+#
+#     # Контуры
+#     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#
+#     # Критерий: площадь
+#     good = [cnt for cnt in contours if 5 < cv2.contourArea(cnt) < 200]
+#
+#     return len(good), binary
+#
+# # === 3. Optuna: функция оптимизации ===
+# def objective(trial):
+#     brightness = trial.suggest_float("brightness", -0.3, 0.3)
+#     contrast = trial.suggest_float("contrast", 0.5, 2.0)
+#     blur_size = trial.suggest_int("blur_size", 0, 2)
+#
+#     score, _ = evaluate_params(img, brightness, contrast, blur_size)
+#     return -score  # минимизируем => ставим минус
+#
+# # === 4. Запуск оптимизации ===
+# study = optuna.create_study()
+# study.optimize(objective, n_trials=50)
+#
+# # === 5. Вывод лучших параметров и результат ===
+# best_params = study.best_params
+# print("🎯 Лучшие параметры:", best_params)
+#
+# # Применим лучшие
+# _, best_mask = evaluate_params(img, **best_params)
+#
+# # Покажем маску
+# cv2.imshow("Best Binary Mask", best_mask)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
