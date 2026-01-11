@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  video-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: video-processor
+    image: video-processor:latest
+    volumes:
+      # Монтируем рабочую директорию для доступа к файлам
+      - .:/app:ro
+      # Опционально: монтируем папку для сохранения результатов
+      - ./output:/app/output
+      # Для работы с X11 (GUI) - раскомментируйте если нужно
+      # - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # - $HOME/.Xauthority:/root/.Xauthority:rw
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - QT_X11_NO_MITSHM=1
+      - PYTHONUNBUFFERED=1
+    network_mode: host
+    # Для работы с камерой нужно добавить устройство
+    # devices:
+    #   - /dev/video0:/dev/video0
+    # Привилегированный режим может потребоваться для доступа к устройствам
+    # privileged: true
+    stdin_open: true
+    tty: true
